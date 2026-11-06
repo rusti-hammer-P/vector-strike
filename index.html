@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VECTOR STRIKE // 暗闇のソナー予測＆一撃スナイピングSTG</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app-shell">
+    <!-- Top Tactical Header -->
+    <header class="top-header">
+      <div class="brand-title">
+        <span class="pulse-dot"></span>
+        <span>VECTOR STRIKE // TACTICAL SONAR &amp; ONE-SHOT RAILGUN</span>
+      </div>
+      <div class="header-actions">
+        <button id="btn-mode-title" class="tac-btn sm-btn" title="タイトルでモードを選択 (T)">TITLE / MODE (T)</button>
+        <button id="btn-quick-retry" class="tac-btn sm-btn" title="現在ラウンドを即時リトライ (R)">QUICK RETRY (R)</button>
+        <button id="btn-mute" class="tac-btn sm-btn">SOUND: ON (M)</button>
+      </div>
+    </header>
+
+    <!-- Main 3-Column Tactical CIC Layout -->
+    <main class="cic-workspace">
+      <!-- Left HUD Panel: Round & Target Telemetry -->
+      <aside class="hud-panel left-panel">
+        <section class="hud-box">
+          <div class="box-label">MISSION ROUND</div>
+          <div id="hud-round-num" class="round-num">ROUND 01 / 10</div>
+          <div id="hud-round-name" class="round-code">STRAIGHT APPROACH</div>
+          <p id="hud-round-desc" class="round-desc">
+            反応を見比べ、黄色の予測円を敵の進行先に重ねて撃つ。
+          </p>
+          <div id="endless-hud" class="hidden">
+            <div id="hud-core" class="telemetry-val">コア 5 / 5</div>
+            <div id="hud-wave-progress" class="round-desc"></div>
+            <div id="hud-wave-timing" class="round-desc"></div>
+          </div>
+        </section>
+
+        <section class="hud-box">
+          <div class="box-label">敵の反応</div>
+          <div class="telemetry-row">
+            <span class="telemetry-key">最後の検知</span>
+            <span id="hud-last-ping" class="telemetry-val">探索中</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-key">検知距離</span>
+            <span id="hud-est-dist" class="telemetry-val">--- m</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-key">接近状態</span>
+            <span id="hud-threat" class="telemetry-val">未検知</span>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Center Radar Canvas Stage -->
+      <section class="radar-stage">
+        <div class="canvas-wrapper">
+          <canvas id="radar-canvas" width="960" height="720"></canvas>
+
+          <!-- Title Overlay -->
+          <div id="title-overlay" class="stage-overlay">
+            <div class="modal-card">
+              <div class="modal-tag">TACTICAL INTERCEPT PROTOTYPE</div>
+              <h1 class="modal-title">VECTOR STRIKE</h1>
+              <p class="modal-lead">
+                レーダーの反応から敵の進路を読み、予測位置を一発で撃ち抜こう。
+              </p>
+              <section id="first-run-guide" class="first-run-guide hidden" aria-labelledby="guide-title">
+                <h2 id="guide-title">まずはこの3つ</h2>
+                <ol>
+                  <li>反応点を見比べると、敵の進む向きがわかる。</li>
+                  <li>黄色い「予測」リングに照準を重ねて撃つ。</li>
+                  <li>敵が曲がったら新しい反応を待つ。右クリック / Shift のパルスは1回使える。</li>
+                </ol>
+                <button id="btn-dismiss-guide" class="tac-btn sm-btn">ガイドを閉じる（スキップ）</button>
+              </section>
+              <button id="btn-start-operation" class="tac-btn primary-btn">
+                作戦開始 [CLICK / SPACE / ENTER]
+              </button>
+              <div class="endless-mode-choice">
+                <p id="endless-description" class="round-desc"></p>
+                <button id="btn-start-endless" class="tac-btn primary-btn">無限Wave 防衛開始</button>
+              </div>
+              <details class="round-select-details">
+                <summary>ラウンドを選んで開始（R1から順におすすめ）</summary>
+                <div class="round-select-panel">
+                <div class="round-wave-row">
+                  <span class="wave-label wave-1">WAVE 1 // STANDARD:</span>
+                  <div class="wave-buttons">
+                    <button class="tac-btn xs-btn" data-start-round="1">R1: STRAIGHT</button>
+                    <button class="tac-btn xs-btn" data-start-round="2">R2: SPIRAL</button>
+                    <button class="tac-btn xs-btn" data-start-round="3">R3: ACCEL</button>
+                    <button class="tac-btn xs-btn" data-start-round="4">R4: ZIGZAG</button>
+                    <button class="tac-btn xs-btn" data-start-round="5">R5: DUAL ECHO</button>
+                  </div>
+                </div>
+                <div class="round-wave-row overdrive-row">
+                  <span class="wave-label wave-2">WAVE 2 // OVERDRIVE:</span>
+                  <div class="wave-buttons">
+                    <button class="tac-btn xs-btn od-btn" data-start-round="6">R6: HYPER LANCE</button>
+                    <button class="tac-btn xs-btn od-btn" data-start-round="7">R7: VORTEX</button>
+                    <button class="tac-btn xs-btn od-btn" data-start-round="8">R8: BLINK</button>
+                    <button class="tac-btn xs-btn od-btn" data-start-round="9">R9: VIPER</button>
+                    <button class="tac-btn xs-btn od-btn" data-start-round="10">R10: MIRAGE</button>
+                  </div>
+                </div>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Briefing Banner Overlay -->
+          <div id="briefing-overlay" class="briefing-banner hidden">
+            <div class="briefing-inner">
+              <div id="briefing-title" class="briefing-title">ROUND 1 / 10 : STRAIGHT APPROACH</div>
+              <div id="briefing-sub" class="briefing-sub">点と点を結ぶ直線軌道を読め！</div>
+              <div class="briefing-hint">[CLICK / SPACE TO ENGAGE IMMEDIATELY]</div>
+            </div>
+          </div>
+
+          <!-- Slim Result & Unveil Banner (Does not block center radar truth unveil!) -->
+          <div id="result-overlay" class="result-banner hidden">
+            <div class="result-info">
+              <div id="result-headline" class="result-headline">TARGET DESTROYED</div>
+              <div id="result-detail" class="result-detail">OFFSET: 4px</div>
+            </div>
+            <div class="result-actions">
+              <button id="btn-result-next" class="tac-btn primary-btn">
+                NEXT TARGET [CLICK / SPACE]
+              </button>
+              <button id="btn-result-retry" class="tac-btn sm-btn">
+                RETRY ROUND [R]
+              </button>
+            </div>
+          </div>
+
+          <!-- All Clear Final Report Overlay -->
+          <div id="endless-result-overlay" class="stage-overlay hidden">
+            <div class="modal-card">
+              <div class="modal-tag">ENDLESS DEFENSE REPORT</div>
+              <h2 class="modal-title">CORE LOST</h2>
+              <p id="endless-result-detail" class="modal-lead"></p>
+              <div class="modal-btn-row">
+                <button id="btn-endless-retry" class="tac-btn primary-btn">再挑戦 [R]</button>
+                <button id="btn-endless-title" class="tac-btn sm-btn">TITLE / MODE [T]</button>
+              </div>
+            </div>
+          </div>
+          <div id="all-clear-overlay" class="stage-overlay hidden">
+            <div class="modal-card">
+              <div class="modal-tag">ALL 10 TARGETS NEUTRALIZED</div>
+              <h2 class="modal-title">OPERATION COMPLETE</h2>
+              <div id="allclear-rank" class="allclear-rank">OVERALL RANK : S</div>
+              <div id="allclear-score" class="allclear-score">42,500 pts</div>
+              <div id="allclear-breakdown" class="allclear-breakdown"></div>
+              <div class="modal-btn-row">
+                <button id="btn-play-again" class="tac-btn primary-btn">
+                  PLAY AGAIN [CLICK / SPACE / R]
+                </button>
+                <button id="btn-back-title" class="tac-btn sm-btn">
+                  TITLE [T]
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right HUD Panel: Weapons, Tactical Ping & Controls -->
+      <aside class="hud-panel right-panel">
+        <section class="hud-box">
+          <div class="box-label">RAILGUN</div>
+          <div id="hud-railgun-status" class="status-pill ready">装填済み [1/1]</div>
+        </section>
+
+        <section class="hud-box">
+          <div class="box-label">TACTICAL PING</div>
+          <div id="hud-ping-status" class="status-pill ping-ready">使用可能 [1/1]</div>
+          <button id="btn-trigger-ping" class="tac-btn full-btn">
+            パルス [右クリック / Shift]
+          </button>
+        </section>
+
+        <details class="hud-box telemetry-details">
+          <summary>照準データ（詳細）</summary>
+          <div class="telemetry-row">
+            <span class="telemetry-key">AZIMUTH</span>
+            <span id="hud-cursor-azm" class="telemetry-val">045.0°</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-key">RANGE</span>
+            <span id="hud-cursor-rng" class="telemetry-val">220 m</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="telemetry-key">ETA (TTI)</span>
+            <span id="hud-cursor-tti" class="telemetry-val accent-cyan">0.22 s</span>
+          </div>
+        </details>
+
+        <section class="hud-box controls-box">
+          <div class="box-label">操作</div>
+          <ul class="controls-list">
+            <li><span>狙う</span><strong>マウス</strong></li>
+            <li><span>撃つ</span><strong>左クリック</strong></li>
+            <li><span>再挑戦</span><strong>R</strong></li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div id="viewport-warning" class="viewport-warning hidden" role="alert" aria-live="assertive" aria-hidden="true">
+    <div class="viewport-warning-card">
+      <h1>画面サイズが足りません</h1>
+      <p>レーダーを縮小せず表示するため、ブラウザーの表示領域を<br /><strong>幅 1504 × 高さ 784 px 以上</strong>にしてください。</p>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
